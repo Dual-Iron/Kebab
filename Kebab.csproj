@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <SteamPath>C:\Program Files (x86)\Steam\steamapps\common\Rain World</SteamPath>
+    <BepPath>$(SteamPath)\BepInEx</BepPath>
+    <Version>1.0.0</Version>
+    <TargetFramework>net35</TargetFramework>
+    <DebugType>None</DebugType>
+    <OutputPath>$(BepPath)\plugins</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <Deterministic>false</Deterministic>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>8.0</LangVersion>
+  </PropertyGroup>
+
+  <Import Condition="Exists('BepPlugin.targets')" Project="BepPlugin.targets" />
+  <!--Add this .targets file to set your own SteamPath property and configure stuff at will. Just make to gitignore the .targets file.-->
+
+  <ItemGroup>
+    <Reference Include="$(BepPath)\core\BepInEx.dll">
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="$(BepPath)\core\MonoMod.Utils.dll">
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="$(BepPath)\core\Mono.Cecil.dll">
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="$(BepPath)\plugins\PartialityWrapper\HOOKS-Assembly-CSharp.dll">
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="$(SteamPath)\RainWorld_Data\Managed\UnityEngine.dll">
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="$(SteamPath)\RainWorld_Data\Managed\Assembly-CSharp.dll">
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!--Simple and extremely easy way to get full public access of the assembly. Done.-->
+  <PropertyGroup>
+    <InternalsAssemblyNames>Assembly-CSharp</InternalsAssemblyNames>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="IgnoresAccessChecksToGenerator" Version="0.4.0" PrivateAssets="All" />
+  </ItemGroup>
+
+</Project>

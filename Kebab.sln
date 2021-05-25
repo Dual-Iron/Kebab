@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31005.135
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kebab", "Kebab.csproj", "{2A0D0563-C482-4475-B8B8-B520C878CAFE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2A0D0563-C482-4475-B8B8-B520C878CAFE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A0D0563-C482-4475-B8B8-B520C878CAFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A0D0563-C482-4475-B8B8-B520C878CAFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A0D0563-C482-4475-B8B8-B520C878CAFE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7D8196BF-D6D7-4CB3-8F03-855220602B83}
+	EndGlobalSection
+EndGlobal
