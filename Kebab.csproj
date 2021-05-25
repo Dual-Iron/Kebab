@@ -40,13 +40,4 @@
     </Reference>
   </ItemGroup>
 
-  <!--Simple and extremely easy way to get full public access of the assembly. Done.-->
-  <PropertyGroup>
-    <InternalsAssemblyNames>Assembly-CSharp</InternalsAssemblyNames>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="IgnoresAccessChecksToGenerator" Version="0.4.0" PrivateAssets="All" />
-  </ItemGroup>
-
 </Project>
