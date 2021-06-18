@@ -23,6 +23,36 @@ namespace Kebab
     [BepInPlugin("com.github.dual.kebab", "Kebab", "1.0.0")]
     internal class KebabPlugin : BaseUnityPlugin
     {
+        private static AbstractPhysicalObject.ImpaledOnSpearStick GetImpaled(PhysicalObject self)
+        {
+            if (self.grabbedBy.Count > 1)
+            {
+                return null;
+            }
+
+            foreach (var obj in self.abstractPhysicalObject.stuckObjects)
+            {
+                if (obj is AbstractPhysicalObject.ImpaledOnSpearStick i && i.B == self.abstractPhysicalObject)
+                {
+                    return i;
+                }
+            }
+
+            return null;
+        }
+
+        private static bool IsKebabbable(PhysicalObject obj)
+        {
+            try
+            {
+                return obj is IPlayerEdible e && e.Edible && obj.TotalMass < 0.4f;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public void OnEnable()
         {
             On.Room.AddObject += Room_AddObject;
@@ -94,36 +124,6 @@ namespace Kebab
         {
             orig(self, value || GetImpaled(self) != null);
         };
-
-        private static AbstractPhysicalObject.ImpaledOnSpearStick GetImpaled(PhysicalObject self)
-        {
-            if (self.grabbedBy.Count > 1)
-            {
-                return null;
-            }
-
-            foreach (var obj in self.abstractPhysicalObject.stuckObjects)
-            {
-                if (obj is AbstractPhysicalObject.ImpaledOnSpearStick i && i.B == self.abstractPhysicalObject)
-                {
-                    return i;
-                }
-            }
-
-            return null;
-        }
-
-        private static bool IsKebabbable(PhysicalObject obj)
-        {
-            try
-            {
-                return obj is IPlayerEdible && obj.TotalMass < 0.4f;
-            }
-            catch
-            {
-                return false;
-            }
-        }
 
         private static void Spear_Update(On.Spear.orig_Update orig, Spear self, bool eu)
         {
