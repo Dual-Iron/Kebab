@@ -13,31 +13,27 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <Deterministic>false</Deterministic>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LangVersion>8.0</LangVersion>
+    <LangVersion>9.0</LangVersion>
   </PropertyGroup>
 
   <Import Condition="Exists('BepPlugin.targets')" Project="BepPlugin.targets" />
   <!--Add this .targets file to set your own SteamPath property and configure stuff at will. Just make to gitignore the .targets file.-->
 
   <ItemGroup>
-    <Reference Include="$(BepPath)\core\BepInEx.dll">
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="$(BepPath)\core\MonoMod.Utils.dll">
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="$(BepPath)\core\Mono.Cecil.dll">
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="$(BepPath)\plugins\PartialityWrapper\HOOKS-Assembly-CSharp.dll">
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="$(SteamPath)\RainWorld_Data\Managed\UnityEngine.dll">
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="$(SteamPath)\RainWorld_Data\Managed\Assembly-CSharp.dll">
-      <Private>false</Private>
-    </Reference>
+    <Reference Include="$(BepPath)\core\MonoMod.RuntimeDetour.dll" />
+    <Reference Include="$(BepPath)\core\BepInEx.dll" />
+    <Reference Include="$(BepPath)\core\MonoMod.Utils.dll" />
+    <Reference Include="$(BepPath)\core\Mono.Cecil.dll" />
+    <Reference Include="$(BepPath)\plugins\PartialityWrapper\HOOKS-Assembly-CSharp.dll" />
+    <Reference Include="$(SteamPath)\RainWorld_Data\Managed\UnityEngine.dll" />
+    <Reference Include="$(SteamPath)\RainWorld_Data\Managed\Assembly-CSharp.dll" />
   </ItemGroup>
+
+  <!-- Make all references non-private, so they won't be copied to the output folder -->
+  <Target Name="ClearReferenceCopyLocalPaths" AfterTargets="ResolveAssemblyReferences">
+    <ItemGroup>
+      <ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)" />
+    </ItemGroup>
+  </Target>
 
 </Project>

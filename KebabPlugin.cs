@@ -1,6 +1,8 @@
 ﻿using BepInEx;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
+using MonoMod.RuntimeDetour;
+using RWCustom;
 using System;
 using System.Linq;
 
@@ -23,18 +25,99 @@ namespace Kebab
     {
         public void OnEnable()
         {
+            On.Room.AddObject += Room_AddObject;
+            On.PhysicalObject.Update += PhysicalObject_Update;
             On.Spear.Update += Spear_Update;
             On.Spear.HitSomethingWithoutStopping += Spear_HitSomethingWithoutStopping;
             On.Weapon.HitThisObject += FixDuplicateStuckObjects;
-            On.PhysicalObject.Update += FixCollisionWithStuckObjects;
             IL.Spear.HitSomething += Spear_HitSomething;
+
+            new Hook(typeof(PhysicalObject).GetMethod("set_CollideWithTerrain"), blockSetter).Apply();
+            new Hook(typeof(PhysicalObject).GetMethod("set_CollideWithSlopes"), blockSetter).Apply();
+            new Hook(typeof(PhysicalObject).GetMethod("set_CollideWithObjects"), blockSetter).Apply();
+            new Hook(typeof(PhysicalObject).GetMethod("set_GoThroughFloors"), blockSetter2).Apply();
+        }
+
+        private void Room_AddObject(On.Room.orig_AddObject orig, Room self, UpdatableAndDeletable obj)
+        {
+            // TODO: Note that this fixes the double-speed bug when traveling between rooms
+            if (self.updateList.IndexOf(obj) == -1)
+            {
+                orig(self, obj);
+            }
+        }
+
+        private void PhysicalObject_Update(On.PhysicalObject.orig_Update orig, PhysicalObject self, bool eu)
+        {
+            // TODO figure out how to fix vulture grubs in general
+            // TODO make sure this doesn't break anything
+            var impaled = GetImpaled(self);
+            if (impaled != null && impaled.A.Room.index == impaled.B.Room.index && impaled.A.realizedObject is Spear s && impaled.B.realizedObject == self && !s.slatedForDeletetion)
+            {
+                for (int i = 0; i < self.bodyChunks.Length; i++)
+                {
+                    self.bodyChunks[i].goThroughFloors = true;
+                    self.bodyChunks[i].collideWithObjects = false;
+                    self.bodyChunks[i].collideWithSlopes = false;
+                    self.bodyChunks[i].collideWithTerrain = false;
+                }
+
+                self.collisionRange = float.NegativeInfinity;
+
+                orig(self, eu);
+
+                self.firstChunk.MoveFromOutsideMyUpdate(eu, s.firstChunk.pos + s.rotation * Custom.LerpMap(impaled.onSpearPosition, 0f, 4f, 15f, -15f));
+            }
+            else
+            {
+                if (self.collisionRange == float.NegativeInfinity)
+                {
+                    self.collisionRange = 50;
+                    for (int i = 0; i < self.bodyChunks.Length; i++)
+                    {
+                        self.bodyChunks[i].goThroughFloors = false;
+                        self.bodyChunks[i].collideWithObjects = true;
+                        self.bodyChunks[i].collideWithSlopes = true;
+                        self.bodyChunks[i].collideWithTerrain = true;
+                    }
+                }
+                orig(self, eu);
+            }
+        }
+
+        private readonly Action<Action<PhysicalObject, bool>, PhysicalObject, bool> blockSetter = (orig, self, value) =>
+        {
+            orig(self, value && GetImpaled(self) == null);
+        };
+
+        private readonly Action<Action<PhysicalObject, bool>, PhysicalObject, bool> blockSetter2 = (orig, self, value) =>
+        {
+            orig(self, value || GetImpaled(self) != null);
+        };
+
+        private static AbstractPhysicalObject.ImpaledOnSpearStick GetImpaled(PhysicalObject self)
+        {
+            if (self.grabbedBy.Count > 1)
+            {
+                return null;
+            }
+
+            foreach (var obj in self.abstractPhysicalObject.stuckObjects)
+            {
+                if (obj is AbstractPhysicalObject.ImpaledOnSpearStick i && i.B == self.abstractPhysicalObject)
+                {
+                    return i;
+                }
+            }
+
+            return null;
         }
 
         private static bool IsKebabbable(PhysicalObject obj)
         {
             try
             {
-                return obj is IPlayerEdible && obj.TotalMass < 0.4;
+                return obj is IPlayerEdible && obj.TotalMass < 0.4f;
             }
             catch
             {
@@ -64,7 +147,7 @@ namespace Kebab
             return false;
         }
 
-        private static void TryImpale(Spear self, PhysicalObject obj, bool sound)
+        private static void TryImpale(Spear self, PhysicalObject obj, int chunk)
         {
             int num = 0;
             int num2 = 0;
@@ -86,31 +169,15 @@ namespace Kebab
             if (num > 5 || num2 >= 5)
                 return;
 
-            if (sound)
-                self.room.PlaySound(SoundID.Spear_Hit_Small_Creature, self.firstChunk);
-
-            new AbstractPhysicalObject.ImpaledOnSpearStick(self.abstractPhysicalObject, obj.abstractPhysicalObject, 0, num2);
-        }
-
-        private static void FixCollisionWithStuckObjects(On.PhysicalObject.orig_Update orig, PhysicalObject self, bool eu)
-        {
-            orig(self, eu);
-            if (IsKebabbable(self))
-            {
-                bool shouldCollide = self.grabbedBy.Count < 1 && !self.abstractPhysicalObject.stuckObjects.Any(a => a is AbstractPhysicalObject.ImpaledOnSpearStick);
-                self.collisionRange = shouldCollide ? 50 : float.NegativeInfinity;
-                self.firstChunk.collideWithObjects = shouldCollide;
-                self.firstChunk.collideWithTerrain = shouldCollide;
-                self.firstChunk.collideWithSlopes = shouldCollide;
-            }
+            new AbstractPhysicalObject.ImpaledOnSpearStick(self.abstractPhysicalObject, obj.abstractPhysicalObject, chunk, num2);
         }
 
         private static void Spear_HitSomethingWithoutStopping(On.Spear.orig_HitSomethingWithoutStopping orig, Spear self, PhysicalObject obj, BodyChunk chunk, PhysicalObject.Appendage appendage)
         {
             orig(self, obj, chunk, appendage);
-            if (IsKebabbable(obj) && !(obj is Fly))
+            if (IsKebabbable(obj) && obj is not Fly)
             {
-                TryImpale(self, obj, false);
+                TryImpale(self, obj, chunk.index);
             }
         }
 
@@ -149,9 +216,29 @@ namespace Kebab
 
                 static bool HitSomething_TryImpale(Spear self, SharedPhysics.CollisionResult result)
                 {
-                    if (IsKebabbable(result.obj))
+                    if (IsKebabbable(result.obj) && (result.obj is not Creature c || c.SpearStick(self, 0.55f, result.chunk, result.onAppendagePos, self.firstChunk.vel)))
                     {
-                        TryImpale(self, result.obj, true);
+                        self.room.PlaySound(SoundID.Spear_Stick_In_Creature, self.firstChunk);
+
+                        TryImpale(self, result.obj, result.chunk.index);
+
+                        if (self.abstractPhysicalObject.world.game.session is ArenaGameSession sess 
+                            && sess.GameTypeSetup.spearHitScore != 0 && self.thrownBy is Player p && result.obj is Creature cr 
+                            && !(cr.State is HealthState h && h.health <= 0f || cr.State is not HealthState hs && cr.State.dead))
+                        {
+                            sess.PlayerLandSpear(p, cr);
+                        }
+
+                        if (self.room.BeingViewed)
+                        {
+                            for (int i = 0; i < 8; i++)
+                            {
+                                var randomOffset = Custom.DegToVec(360f * UnityEngine.Random.value) * self.firstChunk.vel.magnitude * UnityEngine.Random.value * 0.5f;
+                                var vel = -self.firstChunk.vel * UnityEngine.Random.value * 0.5f + randomOffset;
+                                self.room.AddObject(new WaterDrip(result.collisionPoint, vel, false));
+                            }
+                        }
+
                         return true;
                     }
                     return false;
