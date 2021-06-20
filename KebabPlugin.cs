@@ -20,19 +20,23 @@ sealed class ModLoaderInfoAttribute : Attribute
 
 namespace Kebab
 {
-    struct PhysObjData : IWeakData<PhysicalObject>, IConstructible<PhysicalObject>
+    struct PhysObjData : IWeakData<PhysicalObject>
     {
         public int layer;
 
-        void IConstructible<PhysicalObject>.Construct(PhysicalObject owner, object state)
+        void IWeakData<PhysicalObject>.Construct(PhysicalObject owner)
         {
             layer = -1;
         }
+        void IWeakData<PhysicalObject>.Destruct() { }
     }
 
     struct SpearData : IWeakData<Spear>
     {
         public FContainer container;
+
+        void IWeakData<Spear>.Construct(Spear key) { }
+        void IWeakData<Spear>.Destruct() { }
     }
 
     [BepInPlugin("com.github.dual.kebab", "Kebab", "1.0.0")]
