@@ -20,6 +20,7 @@
   <!--Add this .targets file to set your own SteamPath property and configure stuff at will. Just make to gitignore the .targets file.-->
 
   <ItemGroup>
+    <Reference Include="ref\StaticTables.dll" />
     <Reference Include="$(BepPath)\core\MonoMod.RuntimeDetour.dll" />
     <Reference Include="$(BepPath)\core\BepInEx.dll" />
     <Reference Include="$(BepPath)\core\MonoMod.Utils.dll" />

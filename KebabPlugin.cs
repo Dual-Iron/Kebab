@@ -3,6 +3,7 @@ using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 using RWCustom;
+using StaticTables;
 using System;
 using System.Linq;
 
@@ -10,7 +11,7 @@ using System.Linq;
     "Blue fruit and slime mold and grubs, oh my! This mod lets you spear most consumables, so you can make more interesting kebabs."
     )]
 
-sealed class ModLoaderInfoAttribute : System.Attribute
+sealed class ModLoaderInfoAttribute : Attribute
 {
     public string DisplayName { get; set; }
     public string ShortDescription { get; set; }
@@ -20,6 +21,14 @@ sealed class ModLoaderInfoAttribute : System.Attribute
 
 namespace Kebab
 {
+    struct SpearData : IWeakData<Spear>
+    {
+        public FContainer container;
+
+        void IDisposable.Dispose() { }
+        void IWeakData<Spear>.Initialize(Spear owner, object state) { }
+    }
+
     [BepInPlugin("com.github.dual.kebab", "Kebab", "1.0.0")]
     internal class KebabPlugin : BaseUnityPlugin
     {
@@ -55,9 +64,10 @@ namespace Kebab
 
         public void OnEnable()
         {
+            On.AbstractPhysicalObject.AbstractObjectStick.Deactivate += AbstractObjectStick_Deactivate;
+            On.Weapon.AddToContainer += Weapon_AddToContainer;
             On.Room.AddObject += Room_AddObject;
             On.PhysicalObject.Update += PhysicalObject_Update;
-            On.Spear.Update += Spear_Update;
             On.Spear.HitSomethingWithoutStopping += Spear_HitSomethingWithoutStopping;
             On.Weapon.HitThisObject += FixDuplicateStuckObjects;
             IL.Spear.HitSomething += Spear_HitSomething;
@@ -66,6 +76,75 @@ namespace Kebab
             new Hook(typeof(PhysicalObject).GetMethod("set_CollideWithSlopes"), blockSetter).Apply();
             new Hook(typeof(PhysicalObject).GetMethod("set_CollideWithObjects"), blockSetter).Apply();
             new Hook(typeof(PhysicalObject).GetMethod("set_GoThroughFloors"), blockSetter2).Apply();
+        }
+
+        private void AbstractObjectStick_Deactivate(On.AbstractPhysicalObject.AbstractObjectStick.orig_Deactivate orig, AbstractPhysicalObject.AbstractObjectStick self)
+        {
+            if (self is AbstractPhysicalObject.ImpaledOnSpearStick impaleStick && impaleStick.Spear.realizedObject is Spear spear && impaleStick.ObjectOnSpear.realizedObject is PhysicalObject o)
+            {
+                if (spear.Data().Get<SpearData>().container is FContainer)
+                {
+                    var drawable = o as IDrawable ?? o.graphicsModule;
+                    if (drawable != null)
+                        foreach (var camera in spear.room.game.cameras)
+                        {
+                            camera.MoveObjectToContainer(drawable, null);
+                        }
+                }
+            }
+            orig(self);
+        }
+
+        private static void TryImpale(Spear self, PhysicalObject obj, int chunk)
+        {
+            int num = 0;
+            int num2 = 0;
+
+            for (int i = 0; i < self.abstractPhysicalObject.stuckObjects.Count; i++)
+                if (self.abstractPhysicalObject.stuckObjects[i] is AbstractPhysicalObject.ImpaledOnSpearStick o)
+                {
+                    if (o.ObjectOnSpear == obj.abstractPhysicalObject)
+                    {
+                        return;
+                    }
+                    if (o.onSpearPosition == num2)
+                    {
+                        num2++;
+                    }
+                    num++;
+                }
+
+            if (num > 5 || num2 >= 5)
+                return;
+
+            if (self.Data().Get<SpearData>().container is FContainer f)
+            {
+                var drawable = obj as IDrawable ?? obj.graphicsModule;
+                if (drawable != null)
+                    foreach (var camera in self.room.game.cameras)
+                    {
+                        camera.MoveObjectToContainer(drawable, f);
+                    }
+            }
+
+            new AbstractPhysicalObject.ImpaledOnSpearStick(self.abstractPhysicalObject, obj.abstractPhysicalObject, chunk, num2);
+        }
+
+        private void Weapon_AddToContainer(On.Weapon.orig_AddToContainer orig, Weapon self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, FContainer newContatiner)
+        {
+            if (self is Spear s)
+            {
+                ref var data = ref s.Data().Get<SpearData>();
+
+                data.container ??= new();
+
+                orig(self, sLeaser, rCam, data.container);
+
+                data.container.RemoveFromContainer();
+
+                (newContatiner ?? rCam.ReturnFContainer("Items")).AddChild(data.container);
+            }
+            else orig(self, sLeaser, rCam, newContatiner);
         }
 
         private void Room_AddObject(On.Room.orig_AddObject orig, Room self, UpdatableAndDeletable obj)
@@ -125,13 +204,6 @@ namespace Kebab
             orig(self, value || GetImpaled(self) != null);
         };
 
-        private static void Spear_Update(On.Spear.orig_Update orig, Spear self, bool eu)
-        {
-            // TODO: replace this with a proper FContainer for rendering stuck objects in front of the spear
-            orig(self, eu);
-            self.ChangeOverlap(!self.abstractPhysicalObject.stuckObjects.Any(a => a is AbstractPhysicalObject.ImpaledOnSpearStick i && i.ObjectOnSpear != null));
-        }
-
         private bool FixDuplicateStuckObjects(On.Weapon.orig_HitThisObject orig, Weapon self, PhysicalObject obj)
         {
             if (orig(self, obj))
@@ -147,32 +219,7 @@ namespace Kebab
             return false;
         }
 
-        private static void TryImpale(Spear self, PhysicalObject obj, int chunk)
-        {
-            int num = 0;
-            int num2 = 0;
-
-            for (int i = 0; i < self.abstractPhysicalObject.stuckObjects.Count; i++)
-                if (self.abstractPhysicalObject.stuckObjects[i] is AbstractPhysicalObject.ImpaledOnSpearStick o)
-                {
-                    if (o.ObjectOnSpear == obj.abstractPhysicalObject)
-                    {
-                        return;
-                    }
-                    if (o.onSpearPosition == num2)
-                    {
-                        num2++;
-                    }
-                    num++;
-                }
-
-            if (num > 5 || num2 >= 5)
-                return;
-
-            new AbstractPhysicalObject.ImpaledOnSpearStick(self.abstractPhysicalObject, obj.abstractPhysicalObject, chunk, num2);
-        }
-
-        private static void Spear_HitSomethingWithoutStopping(On.Spear.orig_HitSomethingWithoutStopping orig, Spear self, PhysicalObject obj, BodyChunk chunk, PhysicalObject.Appendage appendage)
+        private void Spear_HitSomethingWithoutStopping(On.Spear.orig_HitSomethingWithoutStopping orig, Spear self, PhysicalObject obj, BodyChunk chunk, PhysicalObject.Appendage appendage)
         {
             orig(self, obj, chunk, appendage);
             if (IsKebabbable(obj) && obj is not Fly)
