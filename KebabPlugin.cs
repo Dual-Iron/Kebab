@@ -5,7 +5,6 @@ using MonoMod.RuntimeDetour;
 using RWCustom;
 using StaticTables;
 using System;
-using System.Linq;
 
 [assembly: ModLoaderInfo(Author = "Dual", ShortDescription = "Kebabs to your heart's content.", LongDescription =
     "Blue fruit and slime mold and grubs, oh my! This mod lets you spear most consumables, so you can make more interesting kebabs."
@@ -21,12 +20,19 @@ sealed class ModLoaderInfoAttribute : Attribute
 
 namespace Kebab
 {
-    struct SpearData : IWeakData<Spear>
+    struct PhysObjData : IWeakData, IConstructible<PhysicalObject>
+    {
+        public int layer;
+
+        void IConstructible<PhysicalObject>.Construct(PhysicalObject owner, object state)
+        {
+            layer = -1;
+        }
+    }
+
+    struct SpearData : IWeakData
     {
         public FContainer container;
-
-        void IDisposable.Dispose() { }
-        void IWeakData<Spear>.Initialize(Spear owner, object state) { }
     }
 
     [BepInPlugin("com.github.dual.kebab", "Kebab", "1.0.0")]
@@ -160,6 +166,7 @@ namespace Kebab
         {
             // TODO figure out how to fix vulture grubs in general
             // TODO make sure this doesn't break anything
+            ref var data = ref self.Data().Get<PhysObjData>();
             var impaled = GetImpaled(self);
             if (impaled != null && impaled.A.Room.index == impaled.B.Room.index && impaled.A.realizedObject is Spear s && impaled.B.realizedObject == self && !s.slatedForDeletetion)
             {
@@ -171,17 +178,23 @@ namespace Kebab
                     self.bodyChunks[i].collideWithTerrain = false;
                 }
 
-                self.collisionRange = float.NegativeInfinity;
+                if (data.layer == -1)
+                    data.layer = self.collisionLayer;
+
+                self.collisionLayer = 2;
 
                 orig(self, eu);
+
+                self.collisionLayer = 2;
 
                 self.firstChunk.MoveFromOutsideMyUpdate(eu, s.firstChunk.pos + s.rotation * Custom.LerpMap(impaled.onSpearPosition, 0f, 4f, 15f, -15f));
             }
             else
             {
-                if (self.collisionRange == float.NegativeInfinity)
+                if (data.layer != -1)
                 {
-                    self.collisionRange = 50;
+                    self.collisionLayer = data.layer;
+                    data.layer = -1;
                     for (int i = 0; i < self.bodyChunks.Length; i++)
                     {
                         self.bodyChunks[i].goThroughFloors = false;
