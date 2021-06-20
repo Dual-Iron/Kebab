@@ -20,7 +20,7 @@ sealed class ModLoaderInfoAttribute : Attribute
 
 namespace Kebab
 {
-    struct PhysObjData : IWeakData, IConstructible<PhysicalObject>
+    struct PhysObjData : IWeakData<PhysicalObject>, IConstructible<PhysicalObject>
     {
         public int layer;
 
@@ -30,7 +30,7 @@ namespace Kebab
         }
     }
 
-    struct SpearData : IWeakData
+    struct SpearData : IWeakData<Spear>
     {
         public FContainer container;
     }
