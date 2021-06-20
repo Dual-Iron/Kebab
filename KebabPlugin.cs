@@ -23,6 +23,7 @@ namespace Kebab
     struct PhysObjData : IWeakData<PhysicalObject>
     {
         public int layer;
+        public float range;
 
         void IWeakData<PhysicalObject>.Construct(PhysicalObject owner)
         {
@@ -183,13 +184,18 @@ namespace Kebab
                 }
 
                 if (data.layer == -1)
+                {
                     data.layer = self.collisionLayer;
+                    data.range = self.collisionRange;
+                }
 
                 self.collisionLayer = 2;
+                self.collisionRange = float.NegativeInfinity;
 
                 orig(self, eu);
 
                 self.collisionLayer = 2;
+                self.collisionRange = float.NegativeInfinity;
 
                 self.firstChunk.MoveFromOutsideMyUpdate(eu, s.firstChunk.pos + s.rotation * Custom.LerpMap(impaled.onSpearPosition, 0f, 4f, 15f, -15f));
             }
@@ -198,6 +204,7 @@ namespace Kebab
                 if (data.layer != -1)
                 {
                     self.collisionLayer = data.layer;
+                    self.collisionRange = data.range;
                     data.layer = -1;
                     for (int i = 0; i < self.bodyChunks.Length; i++)
                     {
