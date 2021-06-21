@@ -22,12 +22,14 @@ namespace Kebab
 {
     struct PhysObjData : IWeakData<PhysicalObject>
     {
+        public const int noLayer = int.MinValue;
+
         public int layer;
         public float range;
 
         void IWeakData<PhysicalObject>.Construct(PhysicalObject owner)
         {
-            layer = -1;
+            layer = noLayer;
         }
         void IWeakData<PhysicalObject>.Destruct() { }
     }
@@ -181,13 +183,13 @@ namespace Kebab
             var impaled = GetImpaled(self);
             if (impaled != null && impaled.A.Room.index == impaled.B.Room.index && impaled.A.realizedObject is Spear s && impaled.B.realizedObject == self && !s.slatedForDeletetion)
             {
-                if (data.layer == -1)
+                if (data.layer == PhysObjData.noLayer)
                 {
                     data.layer = self.collisionLayer;
                     data.range = self.collisionRange;
                 }
 
-                self.collisionLayer = 2;
+                self.ChangeCollisionLayer(0);
                 self.collisionRange = float.NegativeInfinity;
 
                 for (int i = 0; i < self.bodyChunks.Length; i++)
@@ -200,7 +202,7 @@ namespace Kebab
 
                 orig(self, eu);
 
-                self.collisionLayer = 2;
+                self.ChangeCollisionLayer(0);
                 self.collisionRange = float.NegativeInfinity;
 
                 for (int i = 0; i < self.bodyChunks.Length; i++)
@@ -215,11 +217,11 @@ namespace Kebab
             }
             else
             {
-                if (data.layer != -1)
+                if (data.layer != PhysObjData.noLayer)
                 {
-                    self.collisionLayer = data.layer;
+                    self.ChangeCollisionLayer(data.layer);
                     self.collisionRange = data.range;
-                    data.layer = -1;
+                    data.layer = PhysObjData.noLayer;
                     for (int i = 0; i < self.bodyChunks.Length; i++)
                     {
                         self.bodyChunks[i].goThroughFloors = false;
