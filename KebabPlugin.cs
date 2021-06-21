@@ -151,6 +151,12 @@ namespace Kebab
 
                 orig(self, sLeaser, rCam, data.container);
 
+                // Move spear sprites to back of container
+                for (int i = sLeaser.sprites.Length - 1; i >= 0; i--)
+                {
+                    data.container.AddChildAtIndex(sLeaser.sprites[i], 0);
+                }
+
                 data.container.RemoveFromContainer();
 
                 (newContatiner ?? rCam.ReturnFContainer("Items")).AddChild(data.container);
@@ -175,14 +181,6 @@ namespace Kebab
             var impaled = GetImpaled(self);
             if (impaled != null && impaled.A.Room.index == impaled.B.Room.index && impaled.A.realizedObject is Spear s && impaled.B.realizedObject == self && !s.slatedForDeletetion)
             {
-                for (int i = 0; i < self.bodyChunks.Length; i++)
-                {
-                    self.bodyChunks[i].goThroughFloors = true;
-                    self.bodyChunks[i].collideWithObjects = false;
-                    self.bodyChunks[i].collideWithSlopes = false;
-                    self.bodyChunks[i].collideWithTerrain = false;
-                }
-
                 if (data.layer == -1)
                 {
                     data.layer = self.collisionLayer;
@@ -192,10 +190,26 @@ namespace Kebab
                 self.collisionLayer = 2;
                 self.collisionRange = float.NegativeInfinity;
 
+                for (int i = 0; i < self.bodyChunks.Length; i++)
+                {
+                    self.bodyChunks[i].goThroughFloors = true;
+                    self.bodyChunks[i].collideWithObjects = false;
+                    self.bodyChunks[i].collideWithSlopes = false;
+                    self.bodyChunks[i].collideWithTerrain = false;
+                }
+
                 orig(self, eu);
 
                 self.collisionLayer = 2;
                 self.collisionRange = float.NegativeInfinity;
+
+                for (int i = 0; i < self.bodyChunks.Length; i++)
+                {
+                    self.bodyChunks[i].goThroughFloors = true;
+                    self.bodyChunks[i].collideWithObjects = false;
+                    self.bodyChunks[i].collideWithSlopes = false;
+                    self.bodyChunks[i].collideWithTerrain = false;
+                }
 
                 self.firstChunk.MoveFromOutsideMyUpdate(eu, s.firstChunk.pos + s.rotation * Custom.LerpMap(impaled.onSpearPosition, 0f, 4f, 15f, -15f));
             }
