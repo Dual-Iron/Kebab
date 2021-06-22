@@ -130,16 +130,6 @@ namespace Kebab
             if (num > 5 || num2 >= 5)
                 return;
 
-            if (self.Data().Get<SpearData>().container is FContainer f)
-            {
-                var drawable = obj as IDrawable ?? obj.graphicsModule;
-                if (drawable != null)
-                    foreach (var camera in self.room.game.cameras)
-                    {
-                        camera.MoveObjectToContainer(drawable, f);
-                    }
-            }
-
             new AbstractPhysicalObject.ImpaledOnSpearStick(self.abstractPhysicalObject, obj.abstractPhysicalObject, chunk, num2);
         }
 
@@ -148,18 +138,10 @@ namespace Kebab
             if (self is Spear s)
             {
                 ref var data = ref s.Data().Get<SpearData>();
-
                 data.container ??= new();
+                data.container.RemoveFromContainer();
 
                 orig(self, sLeaser, rCam, data.container);
-
-                // Move spear sprites to back of container
-                for (int i = sLeaser.sprites.Length - 1; i >= 0; i--)
-                {
-                    data.container.AddChildAtIndex(sLeaser.sprites[i], 0);
-                }
-
-                data.container.RemoveFromContainer();
 
                 (newContatiner ?? rCam.ReturnFContainer("Items")).AddChild(data.container);
             }
@@ -183,6 +165,16 @@ namespace Kebab
             var impaled = GetImpaled(self);
             if (impaled != null && impaled.A.Room.index == impaled.B.Room.index && impaled.A.realizedObject is Spear s && impaled.B.realizedObject == self && !s.slatedForDeletetion)
             {
+                if (s.Data().Get<SpearData>().container is FContainer container)
+                {
+                    var drawable = self as IDrawable ?? self.graphicsModule;
+                    if (drawable != null)
+                        foreach (var camera in s.room.game.cameras)
+                        {
+                            camera.MoveObjectToContainer(drawable, container);
+                        }
+                }
+
                 if (data.layer == PhysObjData.noLayer)
                 {
                     data.layer = self.collisionLayer;
