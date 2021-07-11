@@ -6,18 +6,6 @@ using RWCustom;
 using StaticTables;
 using System;
 
-[assembly: ModLoaderInfo(Author = "Dual", ShortDescription = "Kebabs to your heart's content.", LongDescription =
-    "Blue fruit and slime mold and grubs, oh my! This mod lets you spear most consumables, so you can make more interesting kebabs."
-    )]
-
-sealed class ModLoaderInfoAttribute : Attribute
-{
-    public string DisplayName { get; set; }
-    public string ShortDescription { get; set; }
-    public string LongDescription { get; set; }
-    public string Author { get; set; }
-}
-
 namespace Kebab
 {
     struct PhysObjData : IWeakData<PhysicalObject>
@@ -47,11 +35,6 @@ namespace Kebab
     {
         private static AbstractPhysicalObject.ImpaledOnSpearStick GetImpaled(PhysicalObject self)
         {
-            if (self.grabbedBy.Count > 1)
-            {
-                return null;
-            }
-
             foreach (var obj in self.abstractPhysicalObject.stuckObjects)
             {
                 if (obj is AbstractPhysicalObject.ImpaledOnSpearStick i && i.B == self.abstractPhysicalObject)
@@ -129,6 +112,8 @@ namespace Kebab
 
             if (num > 5 || num2 >= 5)
                 return;
+
+            obj.AllGraspsLetGoOfThisObject(true);
 
             new AbstractPhysicalObject.ImpaledOnSpearStick(self.abstractPhysicalObject, obj.abstractPhysicalObject, chunk, num2);
         }
