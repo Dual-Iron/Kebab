@@ -233,7 +233,7 @@ namespace Kebab
                     self.bodyChunks[i].collideWithTerrain = false;
                 }
 
-                self.firstChunk.HardSetPosition(s.firstChunk.pos + s.rotation * Custom.LerpMap(impaled.onSpearPosition, 0f, 4f, 15f, -15f));
+                self.bodyChunks[impaled.chunk].HardSetPosition(s.firstChunk.pos + s.rotation * Custom.LerpMap(impaled.onSpearPosition, 0f, 4f, 15f, -15f));
             }
             else
             {
