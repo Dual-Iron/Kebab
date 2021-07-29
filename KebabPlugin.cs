@@ -92,6 +92,9 @@ namespace Kebab
 
         public void OnEnable()
         {
+            On.BodyChunk.HardSetPosition += BodyChunk_HardSetPosition;
+            On.VultureGrub.Update += VultureGrub_Update;
+
             On.PlayerGraphics.PlayerObjectLooker.HowInterestingIsThisObject += PlayerObjectLooker_HowInterestingIsThisObject;
             On.AbstractPhysicalObject.AbstractObjectStick.Deactivate += AbstractObjectStick_Deactivate;
             On.Weapon.AddToContainer += Weapon_AddToContainer;
@@ -107,6 +110,24 @@ namespace Kebab
             new Hook(typeof(PhysicalObject).GetMethod("set_CollideWithObjects"), blockSetter).Apply();
             new Hook(typeof(PhysicalObject).GetMethod("set_GoThroughFloors"), blockSetter2).Apply();
         }
+
+#region FIX VULTURE GRUB SPASM
+        private bool grub;
+
+        private void BodyChunk_HardSetPosition(On.BodyChunk.orig_HardSetPosition orig, BodyChunk self, UnityEngine.Vector2 newPos)
+        {
+            if (!grub)
+                orig(self, newPos);
+        }
+
+
+        private void VultureGrub_Update(On.VultureGrub.orig_Update orig, VultureGrub self, bool eu)
+        {
+            grub = true;
+            orig(self, eu);
+            grub = false;
+        }
+#endregion
 
         private float PlayerObjectLooker_HowInterestingIsThisObject(On.PlayerGraphics.PlayerObjectLooker.orig_HowInterestingIsThisObject orig, object self, PhysicalObject obj)
         {
@@ -160,8 +181,6 @@ namespace Kebab
 
         private void PhysicalObject_Update(On.PhysicalObject.orig_Update orig, PhysicalObject self, bool eu)
         {
-            // TODO figure out how to fix vulture grubs in general
-            // TODO make sure this doesn't break anything
             ref var data = ref self.Data().Get<PhysObjData>();
             var impaled = GetImpaled(self);
             if (impaled != null && impaled.A.Room.index == impaled.B.Room.index && impaled.A.realizedObject is Spear s && impaled.B.realizedObject == self && !s.slatedForDeletetion)
@@ -206,7 +225,7 @@ namespace Kebab
                     self.bodyChunks[i].collideWithTerrain = false;
                 }
 
-                self.firstChunk.MoveFromOutsideMyUpdate(eu, s.firstChunk.pos + s.rotation * Custom.LerpMap(impaled.onSpearPosition, 0f, 4f, 15f, -15f));
+                self.firstChunk.pos = s.firstChunk.pos + s.rotation * Custom.LerpMap(impaled.onSpearPosition, 0f, 4f, 15f, -15f);
             }
             else
             {
