@@ -188,8 +188,8 @@ namespace Kebab
         private void PhysicalObject_Update(On.PhysicalObject.orig_Update orig, PhysicalObject self, bool eu)
         {
             ref var data = ref self.Data().Get<PhysObjData>();
-            var impaled = GetImpaled(self);
-            if (impaled != null && impaled.A.Room.index == impaled.B.Room.index && impaled.A.realizedObject is Spear s && impaled.B.realizedObject == self && !s.slatedForDeletetion)
+            var impaleStick = GetImpaled(self);
+            if (impaleStick != null && impaleStick.A.Room.index == impaleStick.B.Room.index && impaleStick.A.realizedObject is Spear s && impaleStick.B.realizedObject == self && !s.slatedForDeletetion)
             {
                 if (s.Data().Get<SpearData>().container is FContainer container)
                 {
@@ -248,7 +248,7 @@ namespace Kebab
                     spearLength = 15;
                 }
 
-                self.bodyChunks[impaled.chunk].pos = s.firstChunk.pos + s.rotation * (spearLength / 2) + -s.rotation * (spearLength / 4f) * impaled.onSpearPosition;
+                self.bodyChunks[impaleStick.chunk].pos = s.firstChunk.pos + s.rotation * (spearLength / 2) + -s.rotation * (spearLength / 4f) * impaleStick.onSpearPosition;
 
                 switch (self)
                 {
@@ -267,7 +267,7 @@ namespace Kebab
                 }
 
                 // Inject a soothing lullaby into their veins
-                if (self is Mushroom mush && s.stuckInObject is Creature c)
+                if (self is Mushroom mush && impaleStick.onSpearPosition < 3 && s.stuckInObject is Creature c)
                 {
                     Drug(s, mush, c);
                 }
@@ -297,7 +297,6 @@ namespace Kebab
 
             static void Drug(Spear s, Mushroom mush, Creature c)
             {
-
                 // Main body chunks (e.g. lizard throats) are very sensitive to being drugged
                 if (s.stuckInAppendage == null && s.stuckInChunk == c.mainBodyChunk)
                 {
@@ -307,7 +306,6 @@ namespace Kebab
                 // Other body chunks (e.g. lizard torsos) are less sensitive
                 else if (s.stuckInAppendage == null)
                 {
-                    c.Stun(40);
                     c.Stun(c.stun + 40);
                 }
                 // Appendages (e.g. DLL arms) are much less sensitive
