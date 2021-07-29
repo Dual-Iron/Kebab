@@ -241,7 +241,14 @@ namespace Kebab
                     self.bodyChunks[i].collideWithTerrain = false;
                 }
 
-                self.bodyChunks[impaled.chunk].pos = s.firstChunk.pos + s.rotation * Custom.LerpMap(impaled.onSpearPosition, 0f, 4f, 15f, -15f);
+                float spearLength = 30;
+
+                if (s.GetType().FullName == "BreakableSpears.HalfSpear")
+                {
+                    spearLength = 15;
+                }
+
+                self.bodyChunks[impaled.chunk].pos = s.firstChunk.pos + s.rotation * (spearLength / 2) + -s.rotation * (spearLength / 4f) * impaled.onSpearPosition;
 
                 switch (self)
                 {
