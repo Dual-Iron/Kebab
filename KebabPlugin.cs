@@ -260,11 +260,12 @@ namespace Kebab
         {
             if (orig(self, obj))
             {
-                for (int i = 0; i < self.abstractPhysicalObject.stuckObjects.Count; i++)
+                foreach (var stick in self.abstractPhysicalObject.stuckObjects)
                 {
-                    if (self.abstractPhysicalObject.stuckObjects[i].A == obj.abstractPhysicalObject ||
-                        self.abstractPhysicalObject.stuckObjects[i].B == obj.abstractPhysicalObject)
+                    if (stick is AbstractPhysicalObject.ImpaledOnSpearStick impaleStick && impaleStick.ObjectOnSpear == obj.abstractPhysicalObject)
+                    {
                         return false;
+                    }
                 }
                 return true;
             }
