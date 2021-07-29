@@ -248,12 +248,12 @@ namespace Kebab
 
                 switch (self)
                 {
-                    case DangleFruit selfCast:  selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
-                    case EggBugEgg selfCast:    selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
-                    case JellyFish selfCast:    selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
-                    case KarmaFlower selfCast:  selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
-                    case SlimeMold selfCast:    selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
-                    case Mushroom selfCast:     selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
+                    case DangleFruit selfCast:  selfCast.setRotation = selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
+                    case EggBugEgg selfCast:    selfCast.setRotation = selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
+                    case JellyFish selfCast:    selfCast.setRotation = selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
+                    case KarmaFlower selfCast:  selfCast.setRotation = selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
+                    case SlimeMold selfCast:    selfCast.setRotation = selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
+                    case Mushroom selfCast:     selfCast.setRotation = selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
                 }
 
                 // Zap!
