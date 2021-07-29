@@ -5,6 +5,7 @@ using MonoMod.RuntimeDetour;
 using RWCustom;
 using StaticTables;
 using System;
+using UnityEngine;
 
 namespace Kebab
 {
@@ -128,7 +129,6 @@ namespace Kebab
             if (!grub)
                 orig(self, newPos);
         }
-
 
         private void VultureGrub_Update(On.VultureGrub.orig_Update orig, VultureGrub self, bool eu)
         {
@@ -254,6 +254,28 @@ namespace Kebab
                     case KarmaFlower selfCast:  selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
                     case SlimeMold selfCast:    selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
                     case Mushroom selfCast:     selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
+                }
+
+                // Zap!
+                if (self is JellyFish jf && jf.Electric && s.stuckInObject is Creature)
+                {
+                    self.Collide(s.stuckInObject, 0, s.stuckInChunk.index);
+                }
+                
+                // Inject a soothing lullaby into their veins
+                if (self is Mushroom mush && s.stuckInObject is Creature c)
+                {
+                    c.Stun(120);
+                    c.Stun(c.stun + 60);
+
+                    if (s.stuckInObject is Player p)
+                    {
+                        p.mushroomCounter = Mathf.Max(p.mushroomCounter, p.stun + 40);
+                        p.ObjectEaten(mush);
+                    }
+
+                    mush.abstractPhysicalObject.LoseAllStuckObjects();
+                    mush.Destroy();
                 }
             }
             else
