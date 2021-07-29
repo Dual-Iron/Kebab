@@ -209,13 +209,15 @@ namespace Kebab
                     data.layer = self.collisionLayer;
                     data.range = self.collisionRange;
 
-                    data.angle = self switch
+                    switch (self)
                     {
-                        DangleFruit df1 => Custom.VecToDeg(df1.rotation) - Custom.VecToDeg(s.rotation),
-                        EggBugEgg eb1 => Custom.VecToDeg(eb1.rotation) - Custom.VecToDeg(s.rotation),
-                        JellyFish jf1 => Custom.VecToDeg(jf1.rotation) - Custom.VecToDeg(s.rotation),
-                        _ => 0
-                    };
+                        case DangleFruit selfCast:  data.angle = Custom.VecToDeg(selfCast.rotation) - Custom.VecToDeg(s.rotation); break;
+                        case EggBugEgg selfCast:    data.angle = Custom.VecToDeg(selfCast.rotation) - Custom.VecToDeg(s.rotation); break;
+                        case JellyFish selfCast:    data.angle = Custom.VecToDeg(selfCast.rotation) - Custom.VecToDeg(s.rotation); break;
+                        case KarmaFlower selfCast:  data.angle = Custom.VecToDeg(selfCast.rotation) - Custom.VecToDeg(s.rotation); break;
+                        case SlimeMold selfCast:    data.angle = Custom.VecToDeg(selfCast.rotation) - Custom.VecToDeg(s.rotation); break;
+                        case Mushroom selfCast:     data.angle = Custom.VecToDeg(selfCast.rotation) - Custom.VecToDeg(s.rotation); break;
+                    }
                 }
 
                 self.ChangeCollisionLayer(0);
@@ -246,9 +248,12 @@ namespace Kebab
 
                 switch (self)
                 {
-                    case DangleFruit selfCast: selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
-                    case EggBugEgg selfCast: selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
-                    case JellyFish selfCast: selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
+                    case DangleFruit selfCast:  selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
+                    case EggBugEgg selfCast:    selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
+                    case JellyFish selfCast:    selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
+                    case KarmaFlower selfCast:  selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
+                    case SlimeMold selfCast:    selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
+                    case Mushroom selfCast:     selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
                 }
             }
             else
