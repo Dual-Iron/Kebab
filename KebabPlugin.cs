@@ -273,6 +273,11 @@ namespace Kebab
                 }
                 orig(self, eu);
             }
+
+            if (IsKebabbable(self))
+            {
+                self.canBeHitByWeapons = true;
+            }
         }
 
         private readonly Action<Action<PhysicalObject, bool>, PhysicalObject, bool> blockSetter = (orig, self, value) =>
