@@ -116,10 +116,7 @@ namespace Kebab
         }
 
         // NOTE: THIS DOES NOT CALL ORIG
-        private void Spear_TryImpaleSmallCreature(On.Spear.orig_TryImpaleSmallCreature orig, Spear self, Creature smallCrit)
-        {
-            TryImpale(self, smallCrit, 0);
-        }
+        private void Spear_TryImpaleSmallCreature(On.Spear.orig_TryImpaleSmallCreature orig, Spear self, Creature smallCrit) { }
 
         #region FIX VULTURE GRUB SPASM
         private bool grub;
@@ -261,21 +258,11 @@ namespace Kebab
                 {
                     self.Collide(s.stuckInObject, 0, s.stuckInChunk.index);
                 }
-                
+
                 // Inject a soothing lullaby into their veins
                 if (self is Mushroom mush && s.stuckInObject is Creature c)
                 {
-                    c.Stun(120);
-                    c.Stun(c.stun + 60);
-
-                    if (s.stuckInObject is Player p)
-                    {
-                        p.mushroomCounter = Mathf.Max(p.mushroomCounter, p.stun + 40);
-                        p.ObjectEaten(mush);
-                    }
-
-                    mush.abstractPhysicalObject.LoseAllStuckObjects();
-                    mush.Destroy();
+                    Drug(s, mush, c);
                 }
             }
             else
@@ -300,6 +287,38 @@ namespace Kebab
             {
                 self.canBeHitByWeapons = true;
             }
+
+            static void Drug(Spear s, Mushroom mush, Creature c)
+            {
+
+                // Main body chunks (e.g. lizard throats) are very sensitive to being drugged
+                if (s.stuckInAppendage == null && s.stuckInChunk == c.mainBodyChunk)
+                {
+                    c.Stun(80);
+                    c.Stun(c.stun + 60);
+                }
+                // Other body chunks (e.g. lizard torsos) are less sensitive
+                else if (s.stuckInAppendage == null)
+                {
+                    c.Stun(40);
+                    c.Stun(c.stun + 40);
+                }
+                // Appendages (e.g. DLL arms) are much less sensitive
+                else
+                {
+                    c.Stun(c.stun + 15);
+                }
+
+                if (s.stuckInObject is Player p)
+                {
+                    p.Stun(p.stun + 40);
+                    p.mushroomCounter = Mathf.Max(p.mushroomCounter, p.stun + 40);
+                    p.ObjectEaten(mush);
+                }
+
+                mush.abstractPhysicalObject.LoseAllStuckObjects();
+                mush.Destroy();
+            }
         }
 
         private readonly Action<Action<PhysicalObject, bool>, PhysicalObject, bool> blockSetter = (orig, self, value) =>
@@ -317,12 +336,8 @@ namespace Kebab
             if (orig(self, obj))
             {
                 foreach (var stick in self.abstractPhysicalObject.stuckObjects)
-                {
                     if (stick is AbstractPhysicalObject.ImpaledOnSpearStick impaleStick && impaleStick.ObjectOnSpear == obj.abstractPhysicalObject)
-                    {
                         return false;
-                    }
-                }
                 return true;
             }
             return false;
@@ -331,7 +346,7 @@ namespace Kebab
         private void Spear_HitSomethingWithoutStopping(On.Spear.orig_HitSomethingWithoutStopping orig, Spear self, PhysicalObject obj, BodyChunk chunk, PhysicalObject.Appendage appendage)
         {
             orig(self, obj, chunk, appendage);
-            if (IsKebabbable(obj) && obj is not Fly)
+            if (IsKebabbable(obj))
             {
                 TryImpale(self, obj, chunk.index);
             }
