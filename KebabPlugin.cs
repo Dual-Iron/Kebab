@@ -50,7 +50,7 @@ namespace Kebab
         {
             try
             {
-                return obj is IPlayerEdible e && e.Edible && obj.TotalMass < 0.4f;
+                return obj is IPlayerEdible e && e.Edible && obj.TotalMass < 0.4f && GetImpaled(obj) is null;
             }
             catch
             {
