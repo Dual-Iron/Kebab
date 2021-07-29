@@ -14,6 +14,7 @@ namespace Kebab
 
         public int layer;
         public float range;
+        public float angle;
 
         void IWeakData<PhysicalObject>.Construct(PhysicalObject owner)
         {
@@ -207,6 +208,14 @@ namespace Kebab
                 {
                     data.layer = self.collisionLayer;
                     data.range = self.collisionRange;
+
+                    data.angle = self switch
+                    {
+                        DangleFruit df1 => Custom.VecToDeg(df1.rotation) - Custom.VecToDeg(s.rotation),
+                        EggBugEgg eb1 => Custom.VecToDeg(eb1.rotation) - Custom.VecToDeg(s.rotation),
+                        JellyFish jf1 => Custom.VecToDeg(jf1.rotation) - Custom.VecToDeg(s.rotation),
+                        _ => 0
+                    };
                 }
 
                 self.ChangeCollisionLayer(0);
@@ -234,6 +243,13 @@ namespace Kebab
                 }
 
                 self.bodyChunks[impaled.chunk].pos = s.firstChunk.pos + s.rotation * Custom.LerpMap(impaled.onSpearPosition, 0f, 4f, 15f, -15f);
+
+                switch (self)
+                {
+                    case DangleFruit selfCast: selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
+                    case EggBugEgg selfCast: selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
+                    case JellyFish selfCast: selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
+                }
             }
             else
             {
