@@ -35,6 +35,11 @@ namespace Kebab
     {
         private static AbstractPhysicalObject.ImpaledOnSpearStick GetImpaled(PhysicalObject self)
         {
+            if (self?.abstractPhysicalObject is null)
+            {
+                return null;
+            }
+
             foreach (var obj in self.abstractPhysicalObject.stuckObjects)
             {
                 if (obj is AbstractPhysicalObject.ImpaledOnSpearStick i && i.B == self.abstractPhysicalObject)
@@ -56,39 +61,6 @@ namespace Kebab
             {
                 return false;
             }
-        }
-
-        public void OnEnable()
-        {
-            On.AbstractPhysicalObject.AbstractObjectStick.Deactivate += AbstractObjectStick_Deactivate;
-            On.Weapon.AddToContainer += Weapon_AddToContainer;
-            On.Room.AddObject += Room_AddObject;
-            On.PhysicalObject.Update += PhysicalObject_Update;
-            On.Spear.HitSomethingWithoutStopping += Spear_HitSomethingWithoutStopping;
-            On.Weapon.HitThisObject += FixDuplicateStuckObjects;
-            IL.Spear.HitSomething += Spear_HitSomething;
-
-            new Hook(typeof(PhysicalObject).GetMethod("set_CollideWithTerrain"), blockSetter).Apply();
-            new Hook(typeof(PhysicalObject).GetMethod("set_CollideWithSlopes"), blockSetter).Apply();
-            new Hook(typeof(PhysicalObject).GetMethod("set_CollideWithObjects"), blockSetter).Apply();
-            new Hook(typeof(PhysicalObject).GetMethod("set_GoThroughFloors"), blockSetter2).Apply();
-        }
-
-        private void AbstractObjectStick_Deactivate(On.AbstractPhysicalObject.AbstractObjectStick.orig_Deactivate orig, AbstractPhysicalObject.AbstractObjectStick self)
-        {
-            if (self is AbstractPhysicalObject.ImpaledOnSpearStick impaleStick && impaleStick.Spear.realizedObject is Spear spear && impaleStick.ObjectOnSpear.realizedObject is PhysicalObject o)
-            {
-                if (spear.Data().Get<SpearData>().container is FContainer)
-                {
-                    var drawable = o as IDrawable ?? o.graphicsModule;
-                    if (drawable != null)
-                        foreach (var camera in spear.room.game.cameras)
-                        {
-                            camera.MoveObjectToContainer(drawable, null);
-                        }
-                }
-            }
-            orig(self);
         }
 
         private static void TryImpale(Spear self, PhysicalObject obj, int chunk)
@@ -116,6 +88,50 @@ namespace Kebab
             obj.AllGraspsLetGoOfThisObject(true);
 
             new AbstractPhysicalObject.ImpaledOnSpearStick(self.abstractPhysicalObject, obj.abstractPhysicalObject, chunk, num2);
+        }
+
+        public void OnEnable()
+        {
+            On.PlayerGraphics.PlayerObjectLooker.HowInterestingIsThisObject += PlayerObjectLooker_HowInterestingIsThisObject;
+            On.AbstractPhysicalObject.AbstractObjectStick.Deactivate += AbstractObjectStick_Deactivate;
+            On.Weapon.AddToContainer += Weapon_AddToContainer;
+            On.Room.AddObject += Room_AddObject;
+            On.PhysicalObject.Update += PhysicalObject_Update;
+            On.Spear.HitSomethingWithoutStopping += Spear_HitSomethingWithoutStopping;
+            On.Weapon.HitThisObject += FixDuplicateStuckObjects;
+            IL.Player.PickupCandidate += Player_PickupCandidate;
+            IL.Spear.HitSomething += Spear_HitSomething;
+
+            new Hook(typeof(PhysicalObject).GetMethod("set_CollideWithTerrain"), blockSetter).Apply();
+            new Hook(typeof(PhysicalObject).GetMethod("set_CollideWithSlopes"), blockSetter).Apply();
+            new Hook(typeof(PhysicalObject).GetMethod("set_CollideWithObjects"), blockSetter).Apply();
+            new Hook(typeof(PhysicalObject).GetMethod("set_GoThroughFloors"), blockSetter2).Apply();
+        }
+
+        private float PlayerObjectLooker_HowInterestingIsThisObject(On.PlayerGraphics.PlayerObjectLooker.orig_HowInterestingIsThisObject orig, object self, PhysicalObject obj)
+        {
+            if (GetImpaled(obj) is not null)
+            {
+                return 0;
+            }
+            return orig(self, obj);
+        }
+
+        private void AbstractObjectStick_Deactivate(On.AbstractPhysicalObject.AbstractObjectStick.orig_Deactivate orig, AbstractPhysicalObject.AbstractObjectStick self)
+        {
+            if (self is AbstractPhysicalObject.ImpaledOnSpearStick impaleStick && impaleStick.Spear.realizedObject is Spear spear && impaleStick.ObjectOnSpear.realizedObject is PhysicalObject o)
+            {
+                if (spear.Data().Get<SpearData>().container is FContainer)
+                {
+                    var drawable = o as IDrawable ?? o.graphicsModule;
+                    if (drawable != null)
+                        foreach (var camera in spear.room.game.cameras)
+                        {
+                            camera.MoveObjectToContainer(drawable, null);
+                        }
+                }
+            }
+            orig(self);
         }
 
         private void Weapon_AddToContainer(On.Weapon.orig_AddToContainer orig, Weapon self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, FContainer newContatiner)
@@ -244,6 +260,43 @@ namespace Kebab
                 TryImpale(self, obj, chunk.index);
             }
         }
+
+        private void Player_PickupCandidate(ILContext il)
+        {
+            try
+            {
+                var cursor = new ILCursor(il);
+
+                if (!cursor.TryGotoNext(MoveType.After, i => i.MatchStloc(4)))
+                {
+                    Logger.LogError("Missing instruction 1");
+                    return;
+                }
+
+                cursor.Emit(OpCodes.Ldarg_0);
+                cursor.Emit(OpCodes.Ldloca_S, il.Body.Variables[4]);
+                cursor.Emit(OpCodes.Ldloc_2);
+                cursor.Emit(OpCodes.Ldloc_3);
+                cursor.EmitDelegate<ModifyPickupPreference>(HookModifyPickupPreference);
+
+                static void HookModifyPickupPreference(Player self, ref float effectiveDistance, int collisionLayer, int physicalObjectIndex)
+                {
+                    var physicalObject = self.room.physicalObjects[collisionLayer][physicalObjectIndex];
+
+                    var impaledStick = GetImpaled(physicalObject);
+                    if (impaledStick != null)
+                    {
+                        effectiveDistance += 500 * impaledStick.onSpearPosition;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
+            }
+        }
+
+        delegate void ModifyPickupPreference(Player self, ref float effectiveDistance, int collisionLayer, int physicalObjectIndex);
 
         private void Spear_HitSomething(ILContext il)
         {
