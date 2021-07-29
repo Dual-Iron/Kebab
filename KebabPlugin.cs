@@ -92,6 +92,8 @@ namespace Kebab
 
         public void OnEnable()
         {
+            On.Spear.TryImpaleSmallCreature += Spear_TryImpaleSmallCreature;
+
             On.BodyChunk.HardSetPosition += BodyChunk_HardSetPosition;
             On.VultureGrub.Update += VultureGrub_Update;
 
@@ -111,7 +113,13 @@ namespace Kebab
             new Hook(typeof(PhysicalObject).GetMethod("set_GoThroughFloors"), blockSetter2).Apply();
         }
 
-#region FIX VULTURE GRUB SPASM
+        // NOTE: THIS DOES NOT CALL ORIG
+        private void Spear_TryImpaleSmallCreature(On.Spear.orig_TryImpaleSmallCreature orig, Spear self, Creature smallCrit)
+        {
+            TryImpale(self, smallCrit, 0);
+        }
+
+        #region FIX VULTURE GRUB SPASM
         private bool grub;
 
         private void BodyChunk_HardSetPosition(On.BodyChunk.orig_HardSetPosition orig, BodyChunk self, UnityEngine.Vector2 newPos)
@@ -127,7 +135,7 @@ namespace Kebab
             orig(self, eu);
             grub = false;
         }
-#endregion
+        #endregion
 
         private float PlayerObjectLooker_HowInterestingIsThisObject(On.PlayerGraphics.PlayerObjectLooker.orig_HowInterestingIsThisObject orig, object self, PhysicalObject obj)
         {
