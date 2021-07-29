@@ -65,8 +65,8 @@ namespace Kebab
 
         private static void TryImpale(Spear self, PhysicalObject obj, int chunk)
         {
-            int num = 0;
-            int num2 = 0;
+            int numImpaled = 0;
+            int posOnSpear = 0;
 
             for (int i = 0; i < self.abstractPhysicalObject.stuckObjects.Count; i++)
                 if (self.abstractPhysicalObject.stuckObjects[i] is AbstractPhysicalObject.ImpaledOnSpearStick o)
@@ -75,19 +75,19 @@ namespace Kebab
                     {
                         return;
                     }
-                    if (o.onSpearPosition == num2)
+                    if (o.onSpearPosition == posOnSpear)
                     {
-                        num2++;
+                        posOnSpear++;
                     }
-                    num++;
+                    numImpaled++;
                 }
 
-            if (num > 5 || num2 >= 5)
+            if (numImpaled > 5 || posOnSpear >= 5)
                 return;
 
             obj.AllGraspsLetGoOfThisObject(true);
 
-            new AbstractPhysicalObject.ImpaledOnSpearStick(self.abstractPhysicalObject, obj.abstractPhysicalObject, chunk, num2);
+            new AbstractPhysicalObject.ImpaledOnSpearStick(self.abstractPhysicalObject, obj.abstractPhysicalObject, chunk, posOnSpear);
         }
 
         public void OnEnable()
