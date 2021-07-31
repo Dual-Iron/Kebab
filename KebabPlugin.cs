@@ -227,12 +227,12 @@ namespace Kebab
 
                     switch (self)
                     {
-                        case DangleFruit selfCast:  data.angle = Custom.VecToDeg(selfCast.rotation) - Custom.VecToDeg(s.rotation); break;
-                        case EggBugEgg selfCast:    data.angle = Custom.VecToDeg(selfCast.rotation) - Custom.VecToDeg(s.rotation); break;
-                        case JellyFish selfCast:    data.angle = Custom.VecToDeg(selfCast.rotation) - Custom.VecToDeg(s.rotation); break;
-                        case KarmaFlower selfCast:  data.angle = Custom.VecToDeg(selfCast.rotation) - Custom.VecToDeg(s.rotation); break;
-                        case SlimeMold selfCast:    data.angle = Custom.VecToDeg(selfCast.rotation) - Custom.VecToDeg(s.rotation); break;
-                        case Mushroom selfCast:     data.angle = Custom.VecToDeg(selfCast.rotation) - Custom.VecToDeg(s.rotation); break;
+                        case DangleFruit selfCast: data.angle = Custom.VecToDeg(selfCast.rotation) - Custom.VecToDeg(s.rotation); break;
+                        case EggBugEgg selfCast: data.angle = Custom.VecToDeg(selfCast.rotation) - Custom.VecToDeg(s.rotation); break;
+                        case JellyFish selfCast: data.angle = Custom.VecToDeg(selfCast.rotation) - Custom.VecToDeg(s.rotation); break;
+                        case KarmaFlower selfCast: data.angle = Custom.VecToDeg(selfCast.rotation) - Custom.VecToDeg(s.rotation); break;
+                        case SlimeMold selfCast: data.angle = Custom.VecToDeg(selfCast.rotation) - Custom.VecToDeg(s.rotation); break;
+                        case Mushroom selfCast: data.angle = Custom.VecToDeg(selfCast.rotation) - Custom.VecToDeg(s.rotation); break;
                     }
                 }
 
@@ -271,12 +271,12 @@ namespace Kebab
 
                 switch (self)
                 {
-                    case DangleFruit selfCast:  selfCast.setRotation = selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
-                    case EggBugEgg selfCast:    selfCast.setRotation = selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
-                    case JellyFish selfCast:    selfCast.setRotation = selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
-                    case KarmaFlower selfCast:  selfCast.setRotation = selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
-                    case SlimeMold selfCast:    selfCast.setRotation = selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
-                    case Mushroom selfCast:     selfCast.setRotation = selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
+                    case DangleFruit selfCast: selfCast.setRotation = selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
+                    case EggBugEgg selfCast: selfCast.setRotation = selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
+                    case JellyFish selfCast: selfCast.setRotation = selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
+                    case KarmaFlower selfCast: selfCast.setRotation = selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
+                    case SlimeMold selfCast: selfCast.setRotation = selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
+                    case Mushroom selfCast: selfCast.setRotation = selfCast.rotation = Custom.DegToVec(data.angle + Custom.VecToDeg(s.rotation)); break;
                 }
 
                 // Zap!
@@ -351,13 +351,14 @@ namespace Kebab
 
         private bool Player_CanIPickThisUp(On.Player.orig_CanIPickThisUp orig, Player self, PhysicalObject obj)
         {
-            foreach (var stuck in obj.abstractPhysicalObject.stuckObjects)
-            {
-                if (stuck is AbstractPhysicalObject.ImpaledOnSpearStick impaled && impaled.Spear.realizedObject != null)
+            if (obj is not Spear)
+                foreach (var stuck in obj.abstractPhysicalObject.stuckObjects)
                 {
-                    return self.grasps.Any(g => g?.grabbed == impaled.Spear.realizedObject) && orig(self, obj);
+                    if (stuck is AbstractPhysicalObject.ImpaledOnSpearStick impaled && impaled.Spear.realizedObject != null)
+                    {
+                        return self.grasps.Any(g => g?.grabbed == impaled.Spear.realizedObject) && orig(self, obj);
+                    }
                 }
-            }
             return orig(self, obj);
         }
 
