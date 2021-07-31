@@ -5,7 +5,7 @@ using MonoMod.RuntimeDetour;
 using RWCustom;
 using StaticTables;
 using System;
-using UnityEngine;
+using System.Linq;
 
 namespace Kebab
 {
@@ -94,21 +94,40 @@ namespace Kebab
 
         public void OnEnable()
         {
+            // Fix batfly impaling
             On.Spear.TryImpaleSmallCreature += Spear_TryImpaleSmallCreature;
 
+            // Fix vulture grub spasming
             On.BodyChunk.HardSetPosition += BodyChunk_HardSetPosition;
             On.VultureGrub.Update += VultureGrub_Update;
 
-            On.PlayerGraphics.PlayerObjectLooker.HowInterestingIsThisObject += PlayerObjectLooker_HowInterestingIsThisObject;
+            // Fix duplicate stuck objects
+            On.Weapon.HitThisObject += FixDuplicateStuckObjects;
+
+            // Fix superspeed when holding a kebab spear
+            On.Room.AddObject += Room_AddObject;
+
+            // Fix graphical issues with impaled objects
             On.AbstractPhysicalObject.AbstractObjectStick.Deactivate += AbstractObjectStick_Deactivate;
             On.Weapon.AddToContainer += Weapon_AddToContainer;
-            On.Room.AddObject += Room_AddObject;
+
+            // Fix player looking at impaled objects
+            On.PlayerGraphics.PlayerObjectLooker.HowInterestingIsThisObject += PlayerObjectLooker_HowInterestingIsThisObject;
+
+            // Lots of things
             On.PhysicalObject.Update += PhysicalObject_Update;
+
+            // Allow hitting kebabbables
             On.Spear.HitSomethingWithoutStopping += Spear_HitSomethingWithoutStopping;
-            On.Weapon.HitThisObject += FixDuplicateStuckObjects;
-            IL.Player.PickupCandidate += Player_PickupCandidate;
             IL.Spear.HitSomething += Spear_HitSomething;
 
+            // Only grab impaled objects if you're holding the spear
+            On.Player.CanIPickThisUp += Player_CanIPickThisUp;
+
+            // Impaled objects are lowest priority to grab
+            IL.Player.PickupCandidate += Player_PickupCandidate;
+
+            // Fix random bullshit i'm tired of documenting
             new Hook(typeof(PhysicalObject).GetMethod("set_CollideWithTerrain"), blockSetter).Apply();
             new Hook(typeof(PhysicalObject).GetMethod("set_CollideWithSlopes"), blockSetter).Apply();
             new Hook(typeof(PhysicalObject).GetMethod("set_CollideWithObjects"), blockSetter).Apply();
@@ -330,6 +349,18 @@ namespace Kebab
             }
         }
 
+        private bool Player_CanIPickThisUp(On.Player.orig_CanIPickThisUp orig, Player self, PhysicalObject obj)
+        {
+            foreach (var stuck in obj.abstractPhysicalObject.stuckObjects)
+            {
+                if (stuck is AbstractPhysicalObject.ImpaledOnSpearStick impaled && impaled.Spear.realizedObject != null)
+                {
+                    return self.grasps.Any(g => g?.grabbed == impaled.Spear.realizedObject) && orig(self, obj);
+                }
+            }
+            return orig(self, obj);
+        }
+
         private void Player_PickupCandidate(ILContext il)
         {
             try
@@ -355,7 +386,7 @@ namespace Kebab
                     var impaledStick = GetImpaled(physicalObject);
                     if (impaledStick != null)
                     {
-                        effectiveDistance += 500 * impaledStick.onSpearPosition;
+                        effectiveDistance += 500 + 500 * impaledStick.onSpearPosition;
                     }
                 }
             }
