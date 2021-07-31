@@ -267,9 +267,12 @@ namespace Kebab
                 }
 
                 // Inject a soothing lullaby into their veins
-                if (self is Mushroom mush && impaleStick.onSpearPosition < 3 && s.stuckInObject is Creature c)
+                if (self is Mushroom mush && impaleStick.onSpearPosition == 0 && s.stuckInObject is Player p)
                 {
-                    Drug(s, mush, c);
+                    p.Stun(p.stun + 120);
+                    p.mushroomCounter += p.stun + 40;
+                    mush.abstractPhysicalObject.Destroy();
+                    mush.Destroy();
                 }
             }
             else
@@ -293,36 +296,6 @@ namespace Kebab
             if (IsKebabbable(self))
             {
                 self.canBeHitByWeapons = true;
-            }
-
-            static void Drug(Spear s, Mushroom mush, Creature c)
-            {
-                // Main body chunks (e.g. lizard throats) are very sensitive to being drugged
-                if (s.stuckInAppendage == null && s.stuckInChunk == c.mainBodyChunk)
-                {
-                    c.Stun(80);
-                    c.Stun(c.stun + 60);
-                }
-                // Other body chunks (e.g. lizard torsos) are less sensitive
-                else if (s.stuckInAppendage == null)
-                {
-                    c.Stun(c.stun + 40);
-                }
-                // Appendages (e.g. DLL arms) are much less sensitive
-                else
-                {
-                    c.Stun(c.stun + 15);
-                }
-
-                if (s.stuckInObject is Player p)
-                {
-                    p.Stun(p.stun + 40);
-                    p.mushroomCounter = Mathf.Max(p.mushroomCounter, p.stun + 40);
-                    p.ObjectEaten(mush);
-                }
-
-                mush.abstractPhysicalObject.LoseAllStuckObjects();
-                mush.Destroy();
             }
         }
 
