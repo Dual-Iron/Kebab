@@ -128,8 +128,6 @@ namespace Kebab
             IL.Player.PickupCandidate += Player_PickupCandidate;
 
             // Fix random bullshit i'm tired of documenting
-            new Hook(typeof(PhysicalObject).GetMethod("set_CollideWithTerrain"), blockSetter).Apply();
-            new Hook(typeof(PhysicalObject).GetMethod("set_CollideWithSlopes"), blockSetter).Apply();
             new Hook(typeof(PhysicalObject).GetMethod("set_CollideWithObjects"), blockSetter).Apply();
             new Hook(typeof(PhysicalObject).GetMethod("set_GoThroughFloors"), blockSetter2).Apply();
         }
@@ -243,8 +241,6 @@ namespace Kebab
                 {
                     self.bodyChunks[i].goThroughFloors = true;
                     self.bodyChunks[i].collideWithObjects = false;
-                    self.bodyChunks[i].collideWithSlopes = false;
-                    self.bodyChunks[i].collideWithTerrain = false;
                 }
 
                 orig(self, eu);
@@ -256,8 +252,6 @@ namespace Kebab
                 {
                     self.bodyChunks[i].goThroughFloors = true;
                     self.bodyChunks[i].collideWithObjects = false;
-                    self.bodyChunks[i].collideWithSlopes = false;
-                    self.bodyChunks[i].collideWithTerrain = false;
                 }
 
                 float spearLength = 30;
@@ -305,8 +299,6 @@ namespace Kebab
                     {
                         self.bodyChunks[i].goThroughFloors = false;
                         self.bodyChunks[i].collideWithObjects = true;
-                        self.bodyChunks[i].collideWithSlopes = true;
-                        self.bodyChunks[i].collideWithTerrain = true;
                     }
                 }
                 orig(self, eu);
